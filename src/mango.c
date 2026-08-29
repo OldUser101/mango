@@ -106,6 +106,7 @@
 #include "common/log.h"
 #include "common/util.h"
 #include "draw/text-node.h"
+#include "service-registry/service-registry.h"
 
 /* macros */
 #define MANGO_MAX(A, B) ((A) > (B) ? (A) : (B))
@@ -1164,6 +1165,8 @@ static struct wlr_ext_foreign_toplevel_image_capture_source_manager_v1
 static struct wl_listener new_foreign_toplevel_capture_request;
 static struct wlr_ext_foreign_toplevel_list_v1 *foreign_toplevel_list;
 
+static struct service_registry *service_registry;
+
 static int32_t drag_begin_cursorx, drag_begin_cursory; /* client-relative */
 static bool start_drag_window = false;
 static int32_t last_apply_drap_time = 0;
@@ -1934,6 +1937,8 @@ void setup(void) {
 		wlr_xdg_foreign_registry_create(dpy);
 	wlr_xdg_foreign_v1_create(dpy, foreign_registry);
 	wlr_xdg_foreign_v2_create(dpy, foreign_registry);
+
+    service_registry = service_registry_create(dpy);
 
 	// ext-workspace协议
 	workspaces_init();
