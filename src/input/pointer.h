@@ -60,7 +60,7 @@ void toggle_hotarea(int32_t x_root, int32_t y_root) {
 
 	if (config.enable_hotarea == 1 && selmon->is_in_hotarea == 0 &&
 		in_hotarea) {
-		/* 热区进入：忽略 ov_tab_mode */
+		/* 热区进入：使用普通网格布局 */
 		selmon->ov_normal_mode = 1;
 		toggleoverview(&arg);
 		selmon->is_in_hotarea = 1;
@@ -89,8 +89,7 @@ axisnotify(struct wl_listener *listener, void *data) {
 	 * for example when you move the scroll wheel. */
 	struct wlr_pointer_axis_event *event = data;
 	ipc_notify_device_event(&event->pointer->base);
-	struct wlr_keyboard *keyboard, *hard_keyboard;
-	uint32_t mods, hard_mods;
+	uint32_t mods;
 	AxisBinding *a;
 	int32_t ji;
 	uint32_t adir;
@@ -103,13 +102,7 @@ axisnotify(struct wl_listener *listener, void *data) {
 		return;
 	}
 
-	hard_keyboard = &kb_group->wlr_group->keyboard;
-	hard_mods = hard_keyboard ? wlr_keyboard_get_modifiers(hard_keyboard) : 0;
-
-	keyboard = wlr_seat_get_keyboard(seat);
-	mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
-
-	mods = mods | hard_mods;
+	mods = keyboard_hard_modifiers();
 
 	if (event->orientation == WL_POINTER_AXIS_VERTICAL_SCROLL)
 		adir = event->delta > 0 ? AxisDown : AxisUp;
@@ -155,8 +148,7 @@ axisnotify(struct wl_listener *listener, void *data) {
 }
 
 int32_t ongesture(struct wlr_pointer_swipe_end_event *event) {
-	struct wlr_keyboard *keyboard, *hard_keyboard;
-	uint32_t mods, hard_mods;
+	uint32_t mods;
 	const GestureBinding *g;
 	uint32_t motion;
 	uint32_t adx = (int32_t)round(fabs(swipe_dx));
@@ -180,13 +172,7 @@ int32_t ongesture(struct wlr_pointer_swipe_end_event *event) {
 		motion = swipe_dy < 0 ? SWIPE_UP : SWIPE_DOWN;
 	}
 
-	hard_keyboard = &kb_group->wlr_group->keyboard;
-	hard_mods = hard_keyboard ? wlr_keyboard_get_modifiers(hard_keyboard) : 0;
-
-	keyboard = wlr_seat_get_keyboard(seat);
-	mods = keyboard ? wlr_keyboard_get_modifiers(keyboard) : 0;
-
-	mods = mods | hard_mods;
+	mods = keyboard_hard_modifiers();
 
 	for (ji = 0; ji < config.gesture_bindings_count; ji++) {
 		g = &config.gesture_bindings[ji];
@@ -415,8 +401,7 @@ buttonpress(struct wl_listener *listener, void *data) {
 }
 
 bool handle_buttonpress(struct wlr_pointer_button_event *event) {
-	struct wlr_keyboard *hard_keyboard, *keyboard;
-	uint32_t hard_mods, mods;
+	uint32_t mods;
 	Client *c = NULL;
 	LayerSurface *l = NULL;
 	MangoGroupBar *gb = NULL;
@@ -441,6 +426,19 @@ bool handle_buttonpress(struct wlr_pointer_button_event *event) {
 		if (locked)
 			break;
 
+		if (switcher_is_active() &&
+			(event->button == BTN_LEFT || event->button == BTN_RIGHT)) {
+			Client *switcher_c = switcher_client_at(cursor->x, cursor->y);
+			if (!switcher_c)
+				switcher_close();
+			else if (event->button == BTN_LEFT)
+				switcher_commit_client(switcher_c);
+			else
+				pending_kill_client(switcher_c);
+			wlr_seat_pointer_notify_clear_focus(seat);
+			return true;
+		}
+
 		xytonode(cursor->x, cursor->y, &surface, NULL, NULL, &gb, NULL, NULL);
 		if (toplevel_from_wlr_surface(surface, &c, &l) >= 0) {
 			if (c && c->scene && c->scene->node.enabled &&
@@ -462,7 +460,7 @@ bool handle_buttonpress(struct wlr_pointer_button_event *event) {
 
 		// overview模式下鼠标左键跳转，右键关闭窗口
 		if (selmon && selmon->isoverview && event->button == BTN_LEFT && c) {
-			toggleoverview(&(Arg){.i = 1});
+			toggleoverview(&(Arg){0});
 			return true;
 		}
 
@@ -474,16 +472,7 @@ bool handle_buttonpress(struct wlr_pointer_button_event *event) {
 		// handle click on tile node
 		client_handle_decorate_click(gb);
 
-		// 当鼠标焦点在layer上的时候，不检测虚拟键盘的mod状态，
-		// 避免layer虚拟键盘锁死mod按键状态
-		hard_keyboard = &kb_group->wlr_group->keyboard;
-		hard_mods =
-			hard_keyboard ? wlr_keyboard_get_modifiers(hard_keyboard) : 0;
-
-		keyboard = wlr_seat_get_keyboard(seat);
-		mods = keyboard && !l ? wlr_keyboard_get_modifiers(keyboard) : 0;
-
-		mods = mods | hard_mods;
+		mods = keyboard_hard_modifiers();
 
 		for (ji = 0; ji < config.mouse_bindings_count; ji++) {
 			m = &config.mouse_bindings[ji];
@@ -1014,8 +1003,7 @@ void pointerfocus(Client *c, struct wlr_surface *surface, double sx, double sy,
 	struct timespec now;
 
 	if (config.sloppyfocus && !start_drag_window && c && time && c->scene &&
-		c->scene->node.enabled &&
-		(!c->mon || !c->mon->isoverview || !config.ov_tab_mode) &&
+		c->scene->node.enabled && (!c->mon || !c->mon->isoverview) &&
 		!c->animation.tagining &&
 		(surface != seat->pointer_state.focused_surface ||
 		 (selmon && selmon->isoverview && selmon->sel != c)) &&
