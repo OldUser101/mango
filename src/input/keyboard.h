@@ -369,7 +369,7 @@ int32_t keyrepeat(void *data) {
 								 1000 / group->keyboard->repeat_info.rate);
 
 	for (i = 0; i < group->nsyms; i++)
-		keybinding(WL_KEYBOARD_KEY_STATE_PRESSED, false, group->mods,
+		keybinding(WL_KEYBOARD_KEY_STATE_PRESSED, false, true, group->mods,
 				   group->keysyms[i], group->keycode);
 
 	return 0;
@@ -387,8 +387,8 @@ bool is_keyboard_shortcut_inhibitor(struct wlr_surface *surface) {
 }
 
 int32_t // 17
-keybinding(uint32_t state, bool locked, uint32_t mods, xkb_keysym_t sym,
-		   uint32_t keycode) {
+keybinding(uint32_t state, bool locked, bool repeated, uint32_t mods,
+		   xkb_keysym_t sym, uint32_t keycode) {
 	/*
 	 * Here we handle compositor keybindings. This is when the compositor is
 	 * processing keys, rather than passing them on to the client for its
@@ -404,6 +404,9 @@ keybinding(uint32_t state, bool locked, uint32_t mods, xkb_keysym_t sym,
 
 	for (ji = 0; ji < config.key_bindings_count; ji++) {
 		if (locked && config.key_bindings[ji].islockapply == false)
+			continue;
+
+		if (repeated && config.key_bindings[ji].isoneshot == true)
 			continue;
 
 		if (state == WL_KEYBOARD_KEY_STATE_RELEASED &&
@@ -581,7 +584,8 @@ void keypress(struct wl_listener *listener, void *data) {
 
 	for (i = 0; i < nsyms; i++)
 		handled =
-			keybinding(event->state, locked, mods, syms[i], keycode) || handled;
+			keybinding(event->state, locked, false, mods, syms[i], keycode) ||
+			handled;
 
 	if (handled && group->keyboard->repeat_info.delay > 0 &&
 		event->state == WL_KEYBOARD_KEY_STATE_PRESSED) {

@@ -790,8 +790,8 @@ static void gpureset(struct wl_listener *listener, void *data);
 static int32_t keyrepeat(void *data);
 
 static void inputdevice(struct wl_listener *listener, void *data);
-static int32_t keybinding(uint32_t state, bool locked, uint32_t mods,
-						  xkb_keysym_t sym, uint32_t keycode);
+static int32_t keybinding(uint32_t state, bool locked, bool repeated,
+						  uint32_t mods, xkb_keysym_t sym, uint32_t keycode);
 static void keypress(struct wl_listener *listener, void *data);
 static void keypressmod(struct wl_listener *listener, void *data);
 static bool keypressglobal(struct wlr_surface *last_surface,
@@ -1959,7 +1959,7 @@ void setup(void) {
 	wlr_xdg_foreign_v1_create(dpy, foreign_registry);
 	wlr_xdg_foreign_v2_create(dpy, foreign_registry);
 
-    service_registry = service_registry_create(dpy);
+	service_registry = service_registry_create(dpy);
 
 	// ext-workspace协议
 	workspaces_init();
