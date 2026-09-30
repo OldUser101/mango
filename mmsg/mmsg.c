@@ -7,7 +7,7 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-#include "../src/common/log.h"
+#include "mango/common/log.h"
 
 static void usage(void) {
 	printf("Usage: mmsg <command> [args...]\n\n");
@@ -32,6 +32,8 @@ static void usage(void) {
 	printf("  get all-monitors                         List all monitors\n");
 	printf("  get all-devices                          List physical input "
 		   "devices\n");
+	printf("  get all-layers                           List all open layer "
+		   "surfaces\n");
 	printf("  get all-tags                             List all tags (all "
 		   "monitors)\n");
 	printf("  get layouts                              List all available "

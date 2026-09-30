@@ -1,5 +1,5 @@
 project('mango', ['c'],
-  version : '0.16.3',
+  version : '0.17.4',
 )
 
 subdir('protocols')
@@ -15,10 +15,10 @@ endif
 prefix = get_option('prefix')
 sysconfdir = get_option('sysconfdir')
 
-# 如果 sysconfdir 以 prefix 开头，去掉 prefix
+# If sysconfdir starts with prefix, strip the prefix.
 if sysconfdir.startswith(prefix) and not is_nixos
   sysconfdir = sysconfdir.substring(prefix.length())
-  # 确保 sysconfdir 是绝对路径
+  # Ensure sysconfdir is an absolute path.
   if not sysconfdir.startswith('/')
     sysconfdir = '/' + sysconfdir
   endif
@@ -29,6 +29,7 @@ libm = cc.find_library('m')
 libdrm = dependency('libdrm')
 xcb = dependency('xcb', required : get_option('xwayland'))
 xlibs = dependency('xcb-icccm', required : get_option('xwayland'))
+xcb_randr = dependency('xcb-randr', required : get_option('xwayland'))
 wayland_server_dep = dependency('wayland-server',version: '>=1.23.1')
 wlroots_dep = dependency('wlroots-0.20',version: '>=0.20.0')
 xkbcommon_dep = dependency('xkbcommon')
@@ -67,7 +68,10 @@ endif
 # define compilation args
 c_args = [
   '-g',
+  '-O2',
+  '-U_FORTIFY_SOURCE',
   '-Wno-unused-function',
+  '-Wno-unused-result',
   '-DWLR_USE_UNSTABLE',
   '-D_POSIX_C_SOURCE=200809L',
   '-DVERSION="@0@"'.format(version_with_hash),
@@ -93,19 +97,25 @@ if get_option('asan')
   link_args += '-fsanitize=address'
 endif
 
+# Auto-include every .c file under src/ (recursively) so new source files
+# are picked up at `meson setup` time without editing this file.
+# NOTE: mmsg/mmsg.c lives outside src/ on purpose (separate binary, own main()).
+find = find_program('find')
+mango_sources = files(run_command(find, 'src', '-name', '*.c', check: true).stdout().split())
+
+mango_inc = include_directories('.', 'include')
+
 executable('mango',
-  'src/mango.c',
-  'src/common/log.c',
-  'src/common/util.c',
-  'src/draw/text-node.c',
-  'src/service-registry/service-registry.c',
+  mango_sources,
 
   wayland_sources,
+  include_directories : mango_inc,
   dependencies : [
     libm,
     libdrm,
     xcb,
     xlibs,
+    xcb_randr,
     libscenefx_dep,
     wayland_server_dep,
     wlroots_dep,
@@ -126,7 +136,7 @@ executable('mango',
 
 wayland_scanner_client_header = generator(
   wayland_scanner,
-  output: '@BASENAME@-protocol.h', 
+  output: '@BASENAME@-protocol.h',
   arguments: ['client-header', '@INPUT@', '@OUTPUT@']
 )
 
@@ -141,14 +151,23 @@ executable('mmsg',
   'mmsg/mmsg.c',
   'src/common/log.c',
   'src/common/util.c',
+
+  wayland_sources,
+
+  include_directories : mango_inc,
+
   dependencies: [
     libwayland_client_dep,
     wlroots_dep,
     pcre2_dep,
   ],
+
   install: true,
+
   c_args: [
     '-g',
+    '-O2',
+    '-U_FORTIFY_SOURCE',
     '-Wno-unused-function',
     '-DWLR_USE_UNSTABLE',
   ],
@@ -160,6 +179,13 @@ portal_install_dir = join_paths(prefix, 'share/xdg-desktop-portal')
 install_data('assets/mango.desktop', install_dir : desktop_install_dir)
 install_data('assets/mango-portals.conf', install_dir : portal_install_dir)
 install_data('assets/config.conf', install_dir : join_paths(sysconfdir, 'mango'))
+
+# Ship mango-session.target so that systemd user services declaring
+# WantedBy=graphical-session.target (portals, panels, ...) are started together
+# with the session. mango activates the target itself, see
+# set_activation_env() in src/main.c
+install_data('assets/mango-session.target',
+  install_dir : join_paths(prefix, 'lib/systemd/user'))
 
 # generate the mmsg man page at build time so the version always
 # matches the project version
