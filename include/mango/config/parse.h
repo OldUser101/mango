@@ -1,5 +1,5 @@
-#ifndef __CONFIG_PARSE_CONFIG_H__
-#define __CONFIG_PARSE_CONFIG_H__ 1
+#ifndef __CONFIG_PARSE_H__
+#define __CONFIG_PARSE_H__ 1
 
 #include "mango/common/types.h"
 #include "mango/dispatch/bind.h"
@@ -118,10 +118,10 @@ typedef struct {
 	float scroller_proportion;
 	int32_t animation_type_open;
 	int32_t animation_type_close;
-	int32_t isnoborder;
-	int32_t isnoshadow;
-	int32_t isnoradius;
-	int32_t isnoanimation;
+	int32_t no_border;
+	int32_t no_shadow;
+	int32_t no_radius;
+	int32_t no_animation;
 	int32_t isopensilent;
 	int32_t istagsilent;
 	int32_t isnamedscratchpad;
@@ -132,7 +132,7 @@ typedef struct {
 	int32_t allow_shortcuts_inhibit;
 	int32_t ignore_maximize;
 	int32_t ignore_minimize;
-	int32_t isnosizehint;
+	int32_t no_size_hint;
 	int32_t idleinhibit_when_focus;
 	int32_t vrr_only_fullscreen;
 	int32_t force_render;
@@ -142,18 +142,18 @@ typedef struct {
 	int32_t offsety;
 	float width;
 	float height;
-	int32_t nofocus;
-	int32_t nofadein;
-	int32_t nofadeout;
+	int32_t no_focus;
+	int32_t no_fade_in;
+	int32_t no_fade_out;
 	int32_t no_force_center;
 	int32_t isterm;
 	int32_t allow_csd;
 	int32_t force_fakemaximize;
 	int32_t force_tiled_state;
 	int32_t force_tearing;
-	int32_t noswallow;
+	int32_t no_swallow;
 	int32_t confine_pointer;
-	int32_t noblur;
+	int32_t no_blur;
 	float focused_opacity;
 	float unfocused_opacity;
 	float scroller_proportion_single;
@@ -166,6 +166,11 @@ typedef struct {
 	char *type;
 	char *value;
 } ConfigEnv;
+
+typedef struct {
+	char *name;
+	char *value;
+} ConfigVar;
 
 typedef struct {
 	const char *name;			 // Monitor name
@@ -210,9 +215,9 @@ typedef struct {
 	int32_t animation_type_open;
 	int32_t animation_type_close;
 	int32_t shield_when_capture;
-	int32_t noblur;
-	int32_t noanim;
-	int32_t noshadow;
+	int32_t no_blur;
+	int32_t no_animation;
+	int32_t no_shadow;
 } ConfigLayerRule;
 
 typedef struct {
@@ -345,6 +350,8 @@ typedef struct {
 	int32_t view_current_to_back;
 	int32_t no_border_when_single;
 	int32_t no_radius_when_single;
+	int32_t monocle_no_border;
+	int32_t monocle_no_gap;
 	int32_t snap_distance;
 	int32_t enable_floating_snap;
 	int32_t float_full_to_top;
@@ -401,6 +408,8 @@ typedef struct {
 	int32_t warpcursor;
 	int32_t drag_corner;
 	int32_t drag_warp_cursor;
+	int32_t enable_border_resize;
+	int32_t border_resize_size;
 
 	/* keyboard */
 	int32_t repeat_rate;
@@ -467,6 +476,8 @@ typedef struct {
 
 	/* appearance */
 	int32_t smartgaps;
+	int32_t monocle_tab_mode;
+	int32_t deck_tab_mode;
 	uint32_t gappih;
 	uint32_t gappiv;
 	uint32_t gappoh;
@@ -477,6 +488,12 @@ typedef struct {
 	uint32_t special_gappov;
 	uint32_t borderpx;
 	uint32_t group_bar_height;
+	uint32_t tab_bar_height;
+	int32_t always_show_group_bar;
+	int32_t group_bar_close_button_enable;
+	uint32_t group_bar_button_size;
+	uint32_t group_bar_button_margin;
+	float group_bar_button_color[4];
 	float scratchpad_width_ratio;
 	float scratchpad_height_ratio;
 	float special_dim;
@@ -527,6 +544,9 @@ typedef struct {
 	ConfigEnv **env;
 	int32_t env_count;
 
+	ConfigVar **vars;
+	int32_t vars_count;
+
 	char **exec;
 	int32_t exec_count;
 
@@ -545,7 +565,9 @@ typedef struct {
 	float drag_floating_refresh_interval;
 	int32_t allow_tearing;
 	int32_t allow_shortcuts_inhibit;
+	int32_t disable_middle_paste;
 	int32_t allow_lock_transparent;
+	int32_t auto_reload_config;
 
 	struct xkb_rule_names xkb_rules;
 	char xkb_rules_rules[128];
@@ -560,6 +582,7 @@ typedef struct {
 	struct xkb_keymap *keymap;
 	DecorateDrawData jumplabeldata;
 	DecorateDrawData groupbardata;
+	DecorateDrawData tabbardata;
 
 	int32_t hdr_depth;
 } Config;
@@ -686,6 +709,7 @@ bool parse_option(Config *config, char *key, char *value, int line_number);
 bool parse_config_line(Config *config, const char *line, int line_number);
 
 bool parse_config_file(Config *config, const char *file_path, bool must_exist);
+char **config_get_file_paths(int *count);
 void reapply_tagrule(void);
 
 void reset_option(void);
