@@ -460,7 +460,6 @@ typedef struct {
 	int32_t blur_layer;
 	int32_t blur_optimized;
 	int32_t border_radius;
-	int32_t border_radius_location_default;
 	struct blur_data blur_params;
 	int32_t shadows;
 	int32_t shadow_only_floating;
@@ -477,6 +476,7 @@ typedef struct {
 	/* appearance */
 	int32_t smartgaps;
 	int32_t monocle_tab_mode;
+	int32_t monocle_right_button_close;
 	int32_t deck_tab_mode;
 	uint32_t gappih;
 	uint32_t gappiv;
@@ -561,8 +561,6 @@ typedef struct {
 	int32_t xwayland_ignore_scale;
 	int32_t syncobj_enable;
 	int32_t tag_carousel;
-	float drag_tile_refresh_interval;
-	float drag_floating_refresh_interval;
 	int32_t allow_tearing;
 	int32_t allow_shortcuts_inhibit;
 	int32_t disable_middle_paste;
@@ -614,6 +612,8 @@ bool monitor_matches_rule(Monitor *m, const ConfigMonitorRule *rule);
 void sync_workspaces_to_tag_num(Monitor *m);
 
 void trim_whitespace(char *str);
+
+void strip_quotes(char *str);
 
 void remove_comment(char *str);
 

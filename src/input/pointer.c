@@ -993,7 +993,7 @@ static void client_begin_drag_float(Client *c) {
 	c->drag_tile_float_backup_geom = c->float_geom;
 	c->old_stack_inner_per = 0.0f;
 	c->old_master_inner_per = 0.0f;
-	set_size_per(c->mon, c);
+	set_size_per(c->mon, c, false);
 }
 
 bool pointer_begin_move_resize(Client *gc, uint32_t mode, double x, double y,
@@ -1369,8 +1369,8 @@ void pointer_process_motion(uint32_t time, struct wlr_input_device *device,
 		if (server.grab_client->isfloating) {
 			server.grab_client->iscustomsize = 1;
 			if (server.last_apply_drag_time == 0 ||
-				time - server.last_apply_drag_time >
-					config.drag_floating_refresh_interval) {
+				time - server.last_apply_drag_time >=
+					drag_refresh_interval_ms(server.grab_client->mon)) {
 				pointer_resize_floating_window(
 					server.grab_client, server.cursor->x, server.cursor->y);
 				server.last_apply_drag_time = time;
@@ -1448,7 +1448,7 @@ void pointer_focus(Client *c, struct wlr_surface *surface, double sx, double sy,
 
 	if (config.sloppyfocus && !server.start_drag_window && c && time &&
 		c->scene && c->scene->node.enabled &&
-		(!c->mon || !c->mon->isoverview) && !c->animation.tagining &&
+		(!c->mon || !is_overcircle_mode(c->mon)) && !c->animation.tagining &&
 		(surface != server.seat->pointer_state.focused_surface ||
 		 (server.selected_monitor && server.selected_monitor->isoverview &&
 		  server.selected_monitor->sel != c)) &&
@@ -1812,6 +1812,13 @@ bool pointer_process_button_press(struct wlr_pointer_button_event *event) {
 				server.group_bar_drag_x = server.cursor->x;
 				server.group_bar_drag_y = server.cursor->y;
 			}
+			return true;
+		}
+
+		/* Optionally close the clicked tab with a right click. */
+		if (bar && bar->is_tab && bar->node_data &&
+			event->button == BTN_RIGHT && config.monocle_right_button_close) {
+			pending_kill_client((Client *)bar->node_data);
 			return true;
 		}
 
