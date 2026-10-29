@@ -4,6 +4,7 @@
 #include "mango/common/server.h"
 #include "mango/common/util.h"
 #include "mango/config/parse.h"
+#include "mango/draw/title-message-bar.h"
 #include "mango/ext-protocol/ext-workspace.h"
 #include "mango/ext-protocol/foreign-toplevel.h"
 #include "mango/ext-protocol/xdg-activation.h"
@@ -20,7 +21,6 @@
 #include "mango/manage/misc.h"
 #include "mango/manage/monitor.h"
 #include "mango/manage/tab.h"
-#include "mango/manage/title-message-bar.h"
 #include "mango/overview/overview.h"
 #include <fcntl.h>
 #include <unistd.h>
@@ -259,8 +259,21 @@ int32_t focus_direction(const Arg *arg) {
 	Client *c = NULL;
 	c = direction_select(arg);
 
-	if (!server.selected_monitor->isoverview)
-		c = get_focused_stack_client(c, arg->tc);
+	if (c && c->mon != server.selected_monitor &&
+		!config.focus_cross_monitor)
+		return 0;
+
+	if (c && !server.selected_monitor->isoverview) {
+		if (c->mon != server.selected_monitor) {
+			Monitor *m = c->mon;
+			c = client_focus_top(m);
+			if (!c)
+				return 0;
+			set_selected_monitor(m);
+		} else {
+			c = get_focused_stack_client(c, arg->tc);
+		}
+	}
 	if (c) {
 		client_focus(c, 1);
 		if (config.warpcursor)
@@ -1047,21 +1060,11 @@ int32_t switch_proportion_preset(const Arg *arg) {
 
 	for (int32_t i = 0; i < config.scroller_proportion_preset_count; i++) {
 		if (config.scroller_proportion_preset[i] == current_proportion) {
-			if (arg->i == NEXT) {
-				if (i == config.scroller_proportion_preset_count - 1)
-					target_proportion = config.scroller_proportion_preset[0];
-				else
-					target_proportion =
-						config.scroller_proportion_preset[i + 1];
-			} else {
-				if (i == 0)
-					target_proportion =
-						config.scroller_proportion_preset
-							[config.scroller_proportion_preset_count - 1];
-				else
-					target_proportion =
-						config.scroller_proportion_preset[i - 1];
-			}
+			if (i == config.scroller_proportion_preset_count - 1)
+				target_proportion = config.scroller_proportion_preset[0];
+			else
+				target_proportion =
+					config.scroller_proportion_preset[i + 1];
 			break;
 		}
 	}
