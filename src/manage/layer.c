@@ -408,7 +408,10 @@ bool popup_unconstrain(Popup *popup) {
 		return true;
 	}
 
-	struct wlr_box usable = type == LayerShell ? l->mon->m : c->mon->w;
+	// a fullscreen client's popups can legitimately cover an exclusive panel
+	struct wlr_box usable = type == LayerShell
+								? l->mon->m
+								: (c->isfullscreen ? c->mon->m : c->mon->w);
 
 	int lx, ly;
 	struct wlr_box constraint_box;
@@ -429,6 +432,10 @@ bool popup_unconstrain(Popup *popup) {
 	}
 
 	wlr_xdg_popup_unconstrain_from_box(wlr_popup, &constraint_box);
+	if (type == XDGShell && wlr_popup->parent == client_surface(c)) {
+		wlr_popup->scheduled.geometry.x += c->bw;
+		wlr_popup->scheduled.geometry.y += c->bw;
+	}
 	return false;
 }
 

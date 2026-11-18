@@ -454,11 +454,6 @@ handle_cursor_axis(struct wl_listener *listener, void *data) {
 		}
 	}
 
-	/* TODO: allow usage of scroll whell for mousebindings, it can be
-	 * implemented checking the event's orientation and the delta of the event
-	 */
-	/* Notify the client with pointer focus of the axis event. */
-
 	target_scroll_factor = pointer_is_trackpad(event->pointer)
 							   ? config.trackpad_scroll_factor
 							   : config.axis_scroll_factor;
@@ -1775,9 +1770,16 @@ bool pointer_process_button_press(struct wlr_pointer_button_event *event) {
 
 			// Focuses the layer that requests interactive focus, but must not
 			// steal focus from an exclusive-focus layer.
+			// Skip it when the layer surface already has keyboard focus:
+			// layer_focus() clears the keyboard focus first, so the client
+			// would get wl_keyboard.leave + enter for the same surface on
+			// every click. GTK3 treats that leave as a lost grab and closes
+			// its popovers (a popover over a popover never gets the click).
 			if (l && !server.exclusive_focus &&
 				l->layer_surface->current.keyboard_interactive ==
-					ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_ON_DEMAND) {
+					ZWLR_LAYER_SURFACE_V1_KEYBOARD_INTERACTIVITY_ON_DEMAND &&
+				server.seat->keyboard_state.focused_surface !=
+					l->layer_surface->surface) {
 				layer_focus(l);
 			}
 		}
