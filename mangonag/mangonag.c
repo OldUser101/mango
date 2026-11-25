@@ -137,9 +137,7 @@ static struct nag_state nag;
 static double nag_pointer_x = 0;
 static double nag_pointer_y = 0;
 
-static void nag_signal(int signal_number) {
-	nag.running = false;
-}
+static void nag_signal(int signal_number) { nag.running = false; }
 
 static void nag_destroy(struct nag_state *n);
 
@@ -217,16 +215,13 @@ static void nag_output_geometry(void *data, struct wl_output *wl_output,
 								int32_t x, int32_t y, int32_t physical_width,
 								int32_t physical_height, int32_t subpixel,
 								const char *make, const char *model,
-								int32_t transform) {
-}
+								int32_t transform) {}
 
 static void nag_output_mode(void *data, struct wl_output *wl_output,
 							uint32_t flags, int32_t width, int32_t height,
-							int32_t refresh) {
-}
+							int32_t refresh) {}
 
-static void nag_output_done(void *data, struct wl_output *wl_output) {
-}
+static void nag_output_done(void *data, struct wl_output *wl_output) {}
 
 static void nag_output_scale(void *data, struct wl_output *wl_output,
 							 int32_t factor) {
@@ -235,8 +230,7 @@ static void nag_output_scale(void *data, struct wl_output *wl_output,
 }
 
 static void nag_output_description(void *data, struct wl_output *wl_output,
-								   const char *description) {
-}
+								   const char *description) {}
 
 static const struct wl_output_listener output_listener = {
 	.geometry = nag_output_geometry,
@@ -256,8 +250,7 @@ static int nag_create_shm_fd(void) {
 	for (unsigned int attempt = 0; attempt < 16; attempt++) {
 		snprintf(name, sizeof(name), "/" NAG_NAMESPACE "-%ld-%u",
 				 (long)getpid(), attempt);
-		int fd =
-			shm_open(name, O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
+		int fd = shm_open(name, O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
 		if (fd >= 0) {
 			shm_unlink(name);
 			return fd;
@@ -317,8 +310,8 @@ static struct nag_buffer *nag_buffer_create(int width, int height) {
 
 static PangoLayout *nag_layout(cairo_t *cr, const char *text, int width) {
 	PangoLayout *layout = pango_cairo_create_layout(cr);
-	PangoFontDescription *desc =
-		pango_font_description_from_string(nag.font ? nag.font : "monospace 13");
+	PangoFontDescription *desc = pango_font_description_from_string(
+		nag.font ? nag.font : "monospace 13");
 	pango_layout_set_font_description(layout, desc);
 	pango_font_description_free(desc);
 	pango_layout_set_text(layout, text ? text : "", -1);
@@ -639,8 +632,8 @@ static PangoLayout *nag_layout_markup(cairo_t *cr, const char *text,
 	PangoAttrList *attrs = nag_ansi_attrs(text ? text : "", &clean);
 
 	PangoLayout *layout = pango_cairo_create_layout(cr);
-	PangoFontDescription *desc =
-		pango_font_description_from_string(nag.font ? nag.font : "monospace 13");
+	PangoFontDescription *desc = pango_font_description_from_string(
+		nag.font ? nag.font : "monospace 13");
 	pango_layout_set_font_description(layout, desc);
 	pango_font_description_free(desc);
 	pango_layout_set_text(layout, clean ? clean : "", -1);
@@ -690,7 +683,8 @@ static void nag_compute_layout(int cairo_width) {
 		cairo_destroy(cr);
 		cairo_surface_destroy(surface);
 
-		int ideal = text_h + button_padding * 2 + button_border * 2 + border * 2;
+		int ideal =
+			text_h + button_padding * 2 + button_border * 2 + border * 2;
 		if (ideal > max_height)
 			max_height = ideal;
 	}
@@ -862,8 +856,8 @@ static const struct zwlr_layer_surface_v1_listener layer_surface_listener = {
 };
 
 static void nag_pointer_button(void *data, struct wl_pointer *pointer,
-							  uint32_t serial, uint32_t time, uint32_t button,
-							  uint32_t state) {
+							   uint32_t serial, uint32_t time, uint32_t button,
+							   uint32_t state) {
 	if (button != BTN_LEFT || state != WL_POINTER_BUTTON_STATE_PRESSED)
 		return;
 
@@ -887,8 +881,7 @@ static void nag_pointer_enter(void *data, struct wl_pointer *pointer,
 }
 
 static void nag_pointer_leave(void *data, struct wl_pointer *pointer,
-							  uint32_t serial, struct wl_surface *surface) {
-}
+							  uint32_t serial, struct wl_surface *surface) {}
 
 static void nag_pointer_motion(void *data, struct wl_pointer *pointer,
 							   uint32_t time, wl_fixed_t sx, wl_fixed_t sy) {
@@ -897,23 +890,18 @@ static void nag_pointer_motion(void *data, struct wl_pointer *pointer,
 }
 
 static void nag_pointer_axis(void *data, struct wl_pointer *pointer,
-							 uint32_t time, uint32_t axis, wl_fixed_t value) {
-}
+							 uint32_t time, uint32_t axis, wl_fixed_t value) {}
 
-static void nag_pointer_frame(void *data, struct wl_pointer *pointer) {
-}
+static void nag_pointer_frame(void *data, struct wl_pointer *pointer) {}
 
 static void nag_pointer_axis_source(void *data, struct wl_pointer *pointer,
-									uint32_t source) {
-}
+									uint32_t source) {}
 
 static void nag_pointer_axis_stop(void *data, struct wl_pointer *pointer,
-								 uint32_t time, uint32_t axis) {
-}
+								  uint32_t time, uint32_t axis) {}
 
 static void nag_pointer_axis_discrete(void *data, struct wl_pointer *pointer,
-									  uint32_t axis, int32_t discrete) {
-}
+									  uint32_t axis, int32_t discrete) {}
 
 static const struct wl_pointer_listener pointer_listener = {
 	.enter = nag_pointer_enter,
@@ -934,12 +922,10 @@ static void nag_keyboard_keymap(void *data, struct wl_keyboard *keyboard,
 
 static void nag_keyboard_enter(void *data, struct wl_keyboard *keyboard,
 							   uint32_t serial, struct wl_surface *surface,
-							   struct wl_array *keys) {
-}
+							   struct wl_array *keys) {}
 
 static void nag_keyboard_leave(void *data, struct wl_keyboard *keyboard,
-							   uint32_t serial, struct wl_surface *surface) {
-}
+							   uint32_t serial, struct wl_surface *surface) {}
 
 static void nag_keyboard_key(void *data, struct wl_keyboard *keyboard,
 							 uint32_t serial, uint32_t time, uint32_t key,
@@ -952,14 +938,11 @@ static void nag_keyboard_key(void *data, struct wl_keyboard *keyboard,
 
 static void nag_keyboard_modifiers(void *data, struct wl_keyboard *keyboard,
 								   uint32_t serial, uint32_t mods_depressed,
-								   uint32_t mods_latched,
-								   uint32_t mods_locked,
-								   uint32_t group) {
-}
+								   uint32_t mods_latched, uint32_t mods_locked,
+								   uint32_t group) {}
 
 static void nag_keyboard_repeat_info(void *data, struct wl_keyboard *keyboard,
-									 int32_t rate, int32_t delay) {
-}
+									 int32_t rate, int32_t delay) {}
 
 static const struct wl_keyboard_listener keyboard_listener = {
 	.keymap = nag_keyboard_keymap,
@@ -982,8 +965,7 @@ static void nag_seat_capabilities(void *data, struct wl_seat *seat,
 	}
 }
 
-static void nag_seat_name(void *data, struct wl_seat *seat, const char *name) {
-}
+static void nag_seat_name(void *data, struct wl_seat *seat, const char *name) {}
 
 static const struct wl_seat_listener seat_listener = {
 	.capabilities = nag_seat_capabilities,
@@ -1002,8 +984,8 @@ static void nag_registry_global(void *data, struct wl_registry *registry,
 		nag.seat = wl_registry_bind(registry, name, &wl_seat_interface, 5);
 		wl_seat_add_listener(nag.seat, &seat_listener, NULL);
 	} else if (strcmp(interface, zwlr_layer_shell_v1_interface.name) == 0) {
-		nag.layer_shell = wl_registry_bind(
-			registry, name, &zwlr_layer_shell_v1_interface, 4);
+		nag.layer_shell =
+			wl_registry_bind(registry, name, &zwlr_layer_shell_v1_interface, 4);
 	} else if (strcmp(interface, wl_output_interface.name) == 0) {
 		struct nag_output *output = calloc(1, sizeof(*output));
 		if (!output)
@@ -1017,8 +999,7 @@ static void nag_registry_global(void *data, struct wl_registry *registry,
 }
 
 static void nag_registry_global_remove(void *data, struct wl_registry *registry,
-									   uint32_t name) {
-}
+									   uint32_t name) {}
 
 static const struct wl_registry_listener registry_listener = {
 	.global = nag_registry_global,
@@ -1045,20 +1026,13 @@ static const struct nag_long_option {
 	const char *name;
 	char short_option;
 } nag_long_options[] = {
-	{"message", 'm'},
-	{"detailed-message", 'l'},
-	{"type", 't'},
-	{"edge", 'e'},
-	{"layer", 'y'},
-	{"output", 'o'},
-	{"font", 'f'},
-	{"dismiss-button", 's'},
-	{"button", 'b'},
-	{"button-no-terminal", 'B'},
-	{"button-dismiss", 'z'},
-	{"button-dismiss-no-terminal", 'Z'},
-	{"timeout", 'T'},
-	{"help", 'h'},
+	{"message", 'm'},		 {"detailed-message", 'l'},
+	{"type", 't'},			 {"edge", 'e'},
+	{"layer", 'y'},			 {"output", 'o'},
+	{"font", 'f'},			 {"dismiss-button", 's'},
+	{"button", 'b'},		 {"button-no-terminal", 'B'},
+	{"button-dismiss", 'z'}, {"button-dismiss-no-terminal", 'Z'},
+	{"timeout", 'T'},		 {"help", 'h'},
 };
 
 static char **nag_expand_long_options(char **argv, int *argc, char **pool_out) {
@@ -1249,7 +1223,8 @@ static void usage(void) {
 			"  -B, --button-no-terminal ...      run directly\n"
 			"  -z, --button-dismiss <text> <cmd> command then dismiss\n"
 			"  -Z, --button-dismiss-no-terminal  run directly then dismiss\n"
-			"  -T, --timeout <ms>                auto dismiss after ms (0 = never)\n"
+			"  -T, --timeout <ms>                auto dismiss after ms (0 = "
+			"never)\n"
 			"  -h, --help                        show this help\n");
 }
 
@@ -1292,10 +1267,9 @@ int main(int argc, char *argv[]) {
 		case 'e':
 			if (strcmp(optarg, "bottom") == 0) {
 				nag.edge = NAG_EDGE_BOTTOM;
-				nag.anchor =
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM |
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
-					ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
+				nag.anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM |
+							 ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+							 ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
 			}
 			break;
 		case 'y':
@@ -1370,10 +1344,9 @@ int main(int argc, char *argv[]) {
 
 	if (nag.message) {
 		size_t n = strlen(nag.message);
-		while (n > 0 && (nag.message[n - 1] == '\n' ||
-						 nag.message[n - 1] == '\r' ||
-						 nag.message[n - 1] == ' ' ||
-						 nag.message[n - 1] == '\t'))
+		while (n > 0 &&
+			   (nag.message[n - 1] == '\n' || nag.message[n - 1] == '\r' ||
+				nag.message[n - 1] == ' ' || nag.message[n - 1] == '\t'))
 			nag.message[--n] = '\0';
 		char *capped = nag_limit_lines(nag.message, NAG_MAX_LINES);
 		if (capped) {
@@ -1427,8 +1400,8 @@ int main(int argc, char *argv[]) {
 	if (nag.timeout_ms > 0) {
 		struct timespec now;
 		clock_gettime(CLOCK_MONOTONIC, &now);
-		deadline_ms = (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000 +
-					  nag.timeout_ms;
+		deadline_ms =
+			(int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000 + nag.timeout_ms;
 	}
 
 	while (nag.running) {
@@ -1445,8 +1418,7 @@ int main(int argc, char *argv[]) {
 		if (nag.timeout_ms > 0) {
 			struct timespec now;
 			clock_gettime(CLOCK_MONOTONIC, &now);
-			int64_t now_ms =
-				(int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000;
+			int64_t now_ms = (int64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000;
 			int64_t remaining = deadline_ms - now_ms;
 			if (remaining <= 0)
 				break;
